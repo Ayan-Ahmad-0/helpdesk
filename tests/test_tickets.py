@@ -1,4 +1,7 @@
 import pytest
+import hashlib, hmac, json
+from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 
 from app.main import app, get_conn
@@ -82,7 +85,7 @@ def test_new_ticket_status_is_open(client):
         data={"subject": "S", "body": "B", "sender_email": "f@example.com"},
     )
     assert fetch_all()[0]["status"] == "open"
-    
+
 def test_whitespace_only_subject_is_accepted(client):
     r = client.post(
         "/tickets",
@@ -91,3 +94,21 @@ def test_whitespace_only_subject_is_accepted(client):
     )
     assert r.status_code == 303   # verify by running; if 422, change to match
     assert count_tickets() == 1
+
+def test_hook_flag_off_makes_no_call(client, monkeypatch):
+    monkeypatch.delenv("AI_TRIAGE_ENABLED", raising=False)
+    with patch("app.main.httpx.post") as post:
+        client.post("/tickets", data={"subject": "S", "body": "B", "sender_email": "g@example.com"})
+    post.assert_not_called()
+
+
+def test_hook_flag_on_posts_signed_ticket(client, monkeypatch):
+    monkeypatch.setenv("AI_TRIAGE_ENABLED", "true")
+    monkeypatch.setenv("TRIAGE_URL", "http://triage.test/webhooks/tickets")
+    monkeypatch.setenv("TRIAGE_WEBHOOK_SECRET", "s3cret")
+    with patch("app.main.httpx.post") as post:
+        client.post("/tickets", data={"subject": "S", "body": "B", "sender_email": "g@example.com"})
+    kwargs = post.call_args.kwargs
+    expected = hmac.new(b"s3cret", kwargs["content"], hashlib.sha256).hexdigest()
+    assert kwargs["headers"]["X-Signature"] == expected
+    assert json.loads(kwargs["content"])["source_id"].startswith("helpdesk-")
