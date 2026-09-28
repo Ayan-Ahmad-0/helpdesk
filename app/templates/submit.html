@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New request | Helpdesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Helpdesk home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>FIELDNOTES <small>SUPPORT</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a class="nav-link is-active" href="/" aria-current="page">New request</a>
+      <a class="nav-link" href="/tickets">Ticket queue</a>
+    </nav>
+    <span class="topbar-tag"><span class="online-dot"></span> SERVICE DESK</span>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">SUPPORT / INTAKE</p>
+        <h1>Submit a ticket</h1>
+        <p class="page-description">Share the details and we’ll get your request moving.</p>
+      </div>
+      <div class="heading-index" aria-hidden="true"><span>01</span><i></i><span>02</span></div>
+    </div>
+
+    <section class="form-layout" aria-labelledby="request-title">
+      <div class="form-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">NEW REQUEST</p>
+            <h2 id="request-title">Request details</h2>
+          </div>
+          <span class="required-note"><span>*</span> REQUIRED</span>
+        </div>
+        <form method="post" action="/tickets" class="ticket-form">
+          <label class="field">
+            <span>Email address <b>*</b></span>
+            <input type="email" name="sender_email" placeholder="you@company.com" autocomplete="email" required>
+          </label>
+          <label class="field">
+            <span>Subject <b>*</b></span>
+            <input type="text" name="subject" placeholder="A short summary of the issue" required>
+          </label>
+          <label class="field">
+            <span>Message <b>*</b></span>
+            <textarea name="body" rows="7" placeholder="Include any details that will help us investigate." required></textarea>
+          </label>
+          <div class="form-footer">
+            <span class="secure-note"><span class="secure-mark" aria-hidden="true">+</span> Your request is sent securely</span>
+            <button class="button-primary" type="submit">Submit ticket <span aria-hidden="true">&#8594;</span></button>
+          </div>
+        </form>
+      </div>
+      <aside class="side-note">
+        <span class="side-note-number">A / 01</span>
+        <div class="side-note-rule"></div>
+        <h2>We’re on it.</h2>
+        <p>Every request is added to the queue so the team can follow up.</p>
+        <a href="/tickets" class="text-link">Browse ticket queue <span aria-hidden="true">&#8599;</span></a>
+        <div class="side-note-stamp" aria-hidden="true">FN<br>HELP</div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="page-footer"><span>FIELDNOTES SUPPORT</span><span>HELPDESK / 01</span></footer>
+</body>
+</html>

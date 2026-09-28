@@ -1,0 +1,9 @@
+fastapi
+email-validator>=2.0
+email-validator>=2.0
+uvicorn[standard]
+jinja2
+python-multipart
+psycopg[binary]
+pytest
+httpx

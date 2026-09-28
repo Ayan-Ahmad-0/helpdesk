@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket queue | Helpdesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Helpdesk home">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span>FIELDNOTES <small>SUPPORT</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a class="nav-link" href="/">New request</a>
+      <a class="nav-link is-active" href="/tickets" aria-current="page">Ticket queue</a>
+    </nav>
+    <span class="topbar-tag"><span class="online-dot"></span> SERVICE DESK</span>
+  </header>
+
+  <main class="page-shell queue-shell">
+    <div class="page-heading queue-heading">
+      <div>
+        <p class="eyebrow">SUPPORT / OVERVIEW</p>
+        <h1>Ticket queue<span class="heading-period">.</span></h1>
+        <p class="page-description">Requests submitted to the support desk.</p>
+      </div>
+      <a href="/" class="button-primary new-ticket-button"><span aria-hidden="true">+</span> New ticket</a>
+    </div>
+
+    <section class="queue-section" aria-labelledby="queue-title">
+      <div class="queue-toolbar">
+        <div>
+          <p class="eyebrow">INCOMING</p>
+          <h2 id="queue-title">All tickets <span class="count-badge">{{ tickets|length }}</span></h2>
+        </div>
+        <span class="queue-updated"><span class="online-dot"></span> LATEST FIRST</span>
+      </div>
+      {% if tickets %}
+      <div class="table-scroll">
+        <table class="ticket-table">
+          <thead>
+            <tr><th scope="col">REFERENCE</th><th scope="col">SUBJECT</th><th scope="col">REQUESTER</th><th scope="col">STATUS</th><th scope="col">RECEIVED</th></tr>
+          </thead>
+          <tbody>
+            {% for t in tickets %}
+            <tr>
+              <td class="ticket-id">#{{ "%04d"|format(t.id) }}</td>
+              <td class="ticket-subject">{{ t.subject }}</td>
+              <td class="ticket-email">{{ t.sender_email }}</td>
+              <td><span class="status-pill">{{ t.status }}</span></td>
+              <td class="ticket-date">{{ t.created_at.strftime("%b %d, %Y · %H:%M") }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <span class="empty-index">QUEUE / 00</span>
+        <h3>No tickets yet</h3>
+        <p>New requests will appear here.</p>
+        <a href="/" class="text-link">Create the first ticket <span aria-hidden="true">&#8599;</span></a>
+      </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <footer class="page-footer"><span>FIELDNOTES SUPPORT</span><span>HELPDESK / 02</span></footer>
+</body>
+</html>

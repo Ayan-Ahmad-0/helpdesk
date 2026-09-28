@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: helpdesk
+      POSTGRES_PASSWORD: helpdesk
+      POSTGRES_DB: helpdesk
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helpdesk"]
+      interval: 3s
+      retries: 10
+
+  web:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://helpdesk:helpdesk@db:5432/helpdesk
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
