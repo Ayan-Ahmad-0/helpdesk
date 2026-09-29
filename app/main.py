@@ -4,13 +4,18 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
 import psycopg
+from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, Form, Request
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from psycopg.rows import dict_row
+
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL", "postgresql://helpdesk:helpdesk@localhost:5432/helpdesk"
@@ -42,6 +47,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -55,16 +61,21 @@ def notify_triage(ticket: dict) -> None:
     if not ai_triage_enabled():
         log.info("ai triage skipped, flag off")
         return
+    url = os.environ.get("TRIAGE_URL")
+    secret = os.environ.get("TRIAGE_WEBHOOK_SECRET")
+    if not url or not secret:
+        log.error("ai triage enabled but TRIAGE_URL or TRIAGE_WEBHOOK_SECRET is missing")
+        return
     body = json.dumps(ticket, default=str).encode()
-    secret = os.environ["TRIAGE_WEBHOOK_SECRET"].encode()
-    sig = hmac.new(secret, body, hashlib.sha256).hexdigest()
+    sig = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
     try:
-        httpx.post(
-            os.environ["TRIAGE_URL"],
+        response = httpx.post(
+            url,
             content=body,
             headers={"X-Signature": sig, "Content-Type": "application/json"},
             timeout=5,
         )
+        response.raise_for_status()
     except Exception:
         log.exception("ai triage call failed")  # never break ticket submission
 

@@ -16,6 +16,9 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql://helpdesk:helpdesk@db:5432/helpdesk
+      AI_TRIAGE_ENABLED: ${AI_TRIAGE_ENABLED:-false}
+      TRIAGE_URL: ${TRIAGE_URL:-}
+      TRIAGE_WEBHOOK_SECRET: ${TRIAGE_WEBHOOK_SECRET:-}
     ports:
       - "8000:8000"
     depends_on:
