@@ -128,6 +128,8 @@ a { color: inherit; }
 .ticket-email { color: #66766e !important; }
 .status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border-radius: 2px; background: #eef4df; color: #526b28; font-size: 10px; font-weight: 600; }
 .status-pill::before { width: 5px; height: 5px; border-radius: 50%; background: #8daa40; content: ""; }
+.status-pill.status-rejected { background: #fee4e2; color: #b42318; }
+.status-pill.status-rejected::before { background: #d92d20; }
 .empty-state { display: flex; min-height: 255px; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px; text-align: center; }
 .empty-index { margin-bottom: 18px; color: #87958c; font: 500 9px var(--mono); }
 .empty-state h3 { margin: 0; font-size: 19px; font-weight: 600; }

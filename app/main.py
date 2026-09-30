@@ -5,6 +5,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import httpx
 import psycopg
@@ -14,7 +15,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from psycopg.rows import dict_row
-
+from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Request
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 DATABASE_URL = os.environ.get(
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS tickets (
 """
 
 log = logging.getLogger("uvicorn.error")  # uvicorn shows INFO for this logger
+PAKISTAN_TZ = ZoneInfo("Asia/Karachi")
 
 
 def get_conn():
@@ -120,4 +122,22 @@ def list_tickets(request: Request):
             "SELECT id, subject, sender_email, status, created_at "
             "FROM tickets ORDER BY id DESC"
         ).fetchall()
+    for ticket in tickets:
+        ticket["created_at"] = ticket["created_at"].astimezone(PAKISTAN_TZ)
     return templates.TemplateResponse(request, "list.html", {"tickets": tickets})
+
+@app.post("/tickets/{ticket_id}/status")
+async def update_ticket_status(ticket_id: int, request: Request):
+    raw = await request.body()
+    secret = os.environ.get("TRIAGE_WEBHOOK_SECRET", "")
+    sig = hmac.new(secret.encode(), raw, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, request.headers.get("X-Signature", "")):
+        raise HTTPException(status_code=401, detail="bad signature")
+    try:
+        payload = json.loads(raw)
+        new_status = payload["status"]
+    except (ValueError, KeyError):
+        raise HTTPException(status_code=422, detail="invalid payload")
+    with get_conn() as conn:
+        conn.execute("UPDATE tickets SET status=%s WHERE id=%s", (new_status, ticket_id))
+    return {"status": "updated"}

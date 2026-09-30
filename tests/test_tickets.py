@@ -38,6 +38,36 @@ def test_list_page_shows_ticket(client):
     r = client.get("/tickets")
     assert r.status_code == 200
     assert "Refund please" in r.text
+
+
+def test_ticket_received_time_is_displayed_in_pakistan_timezone(client):
+    client.post(
+        "/tickets",
+        data={"subject": "Timezone", "body": "Check local time", "sender_email": "time@example.com"},
+    )
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE tickets SET created_at=TIMESTAMPTZ '2026-09-30 06:17:00+00' WHERE id=1"
+        )
+
+    response = client.get("/tickets")
+
+    assert response.status_code == 200
+    assert "Sep 30, 2026 · 11:17" in response.text
+
+
+def test_rejected_ticket_has_red_status_badge(client):
+    client.post(
+        "/tickets",
+        data={"subject": "Review", "body": "Please review", "sender_email": "review@example.com"},
+    )
+    with get_conn() as conn:
+        conn.execute("UPDATE tickets SET status='rejected' WHERE id=1")
+
+    response = client.get("/tickets")
+
+    assert response.status_code == 200
+    assert 'class="status-pill status-rejected"' in response.text
 def fetch_all():
     with get_conn() as conn:
         return conn.execute("SELECT * FROM tickets ORDER BY id").fetchall()
@@ -85,6 +115,28 @@ def test_new_ticket_status_is_open(client):
         data={"subject": "S", "body": "B", "sender_email": "f@example.com"},
     )
     assert fetch_all()[0]["status"] == "open"
+
+
+@pytest.mark.parametrize("status", ["approved", "rejected"])
+def test_signed_triage_callback_updates_ticket_status(client, monkeypatch, status):
+    monkeypatch.setenv("AI_TRIAGE_ENABLED", "false")
+    monkeypatch.setenv("TRIAGE_WEBHOOK_SECRET", "callback-secret")
+    client.post(
+        "/tickets",
+        data={"subject": "Review", "body": "Please review", "sender_email": "review@example.com"},
+    )
+    ticket_id = fetch_all()[0]["id"]
+    body = json.dumps({"status": status}).encode()
+    signature = hmac.new(b"callback-secret", body, hashlib.sha256).hexdigest()
+
+    response = client.post(
+        f"/tickets/{ticket_id}/status",
+        content=body,
+        headers={"X-Signature": signature, "Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 200
+    assert fetch_all()[0]["status"] == status
 
 def test_whitespace_only_subject_is_accepted(client):
     r = client.post(
